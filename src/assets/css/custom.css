@@ -1,0 +1,101 @@
+:root {
+  --primary-color: #4a90e2; /* Modern blue */
+  --secondary-color: #50e3c2; /* Fresh teal */
+  --background-color: #f8f9fa; /* Light gray */
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --input-radius: 8px;
+  --btn-radius: 8px;
+}
+
+body {
+  background-color: var(--background-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern sans-serif */
+  font-size: 16px; /* Base font size increased */
+  color: #333;
+}
+
+.container {
+  max-width: 960px; /* Slightly wider default container */
+}
+
+/* Card Styling */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 1.5rem 1.5rem; /* More padding */
+  font-weight: 600;
+  font-size: 1.25rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.card-body {
+  padding: 2rem; /* More padding inside cards */
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  border-radius: var(--input-radius);
+  padding: 0.75rem 1rem; /* Larger inputs */
+  border: 1px solid #ced4da;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.btn {
+  border-radius: var(--btn-radius);
+  padding: 0.6rem 1.2rem; /* Larger buttons */
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #357abd;
+  border-color: #357abd;
+}
+
+/* Navbar */
+.navbar {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Tables */
+.table th {
+  font-weight: 600;
+  color: #555;
+  border-top: none;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
