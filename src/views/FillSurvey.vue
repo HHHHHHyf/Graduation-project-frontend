@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="bg-light min-vh-100 py-5">
       <div class="container container-sm">
           <div class="row justify-content-center">
@@ -82,12 +82,39 @@
               </div>
           </div>
       </div>
+
+      <!-- Advice Modal -->
+      <div class="modal fade" id="adviceModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content border-0 shadow-lg">
+                  <div class="modal-header bg-success text-white">
+                      <h5 class="modal-title fw-bold">✨ 智能分析建议</h5>
+                      <button type="button" class="btn-close btn-close-white" @click="closeAdviceModal"></button>
+                  </div>
+                  <div class="modal-body p-5">
+                      <div class="text-center mb-4">
+                          <div class="display-1 mb-3">🤖</div>
+                          <h4 class="fw-bold text-dark">感谢您的参与！</h4>
+                          <p class="text-muted">根据您的回答，我们要为您提供以下建议：</p>
+                      </div>
+                      <div class="bg-light p-4 rounded-3 border">
+                          <p class="mb-0 fs-5 lh-lg" style="white-space: pre-wrap;">{{ adviceResult }}</p>
+                      </div>
+                  </div>
+                  <div class="modal-footer justify-content-center border-0 pb-4">
+                      <button type="button" class="btn btn-primary px-5 py-2 rounded-pill" @click="closeAdviceModal">我知道了</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Modal } from 'bootstrap'
 
 const route = useRoute()
 const router = useRouter()
@@ -97,9 +124,15 @@ const answersMap = reactive({})
 const loading = ref(true)
 const notFound = ref(false)
 const submitting = ref(false)
+const adviceResult = ref('')
+let adviceModalInstance = null
 
 onMounted(async () => {
   await loadSurvey();
+  const modalEl = document.getElementById('adviceModal')
+  if (modalEl) {
+      adviceModalInstance = new Modal(modalEl)
+  }
 })
 
 async function loadSurvey() {
@@ -161,11 +194,13 @@ async function handleSubmit() {
       });
 
       if (res.ok) {
-          alert('提交成功！感谢您的参与。');
-          if (token) {
-              router.push('/dashboard');
+          const data = await res.json();
+          if (data.advice) {
+              adviceResult.value = data.advice;
+              adviceModalInstance.show();
           } else {
-              router.go(0); // Reload
+              alert('提交成功！感谢您的参与。');
+              finishSubmission();
           }
       } else {
           const err = await res.json();
@@ -176,5 +211,21 @@ async function handleSubmit() {
   } finally {
       submitting.value = false;
   }
+}
+
+function closeAdviceModal() {
+    if (adviceModalInstance) {
+        adviceModalInstance.hide();
+    }
+    finishSubmission();
+}
+
+function finishSubmission() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        router.push('/dashboard');
+    } else {
+        router.go(0); // Reload
+    }
 }
 </script>

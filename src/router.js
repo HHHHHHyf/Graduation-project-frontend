@@ -6,7 +6,9 @@ import Dashboard from './views/Dashboard.vue'
 import CreateSurvey from './views/CreateSurvey.vue'
 import FillSurvey from './views/FillSurvey.vue'
 import Results from './views/Results.vue'
-import QuestionBank from './views/QuestionBank.vue' // Add import
+import QuestionBank from './views/QuestionBank.vue' 
+import ResponseDetail from './views/ResponseDetail.vue'
+import MyResponses from './views/MyResponses.vue' // Add import
 
 const routes = [
   { path: '/', component: Login },
@@ -14,14 +16,27 @@ const routes = [
   { path: '/register', component: Register },
   { path: '/dashboard', component: Dashboard },
   { path: '/create', component: CreateSurvey },
-  { path: '/question-bank', component: QuestionBank }, // Add route
+  { 
+    path: '/my-responses', 
+    component: MyResponses,
+    meta: { keepAlive: true }
+  }, // Add route
+  { path: '/question-bank', component: QuestionBank },
   { path: '/survey/:id', component: FillSurvey },
   { path: '/results/:id', component: Results },
+  { path: '/response/:id', component: ResponseDetail },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  },
 })
 
 export default router

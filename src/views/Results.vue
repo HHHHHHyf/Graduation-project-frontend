@@ -199,8 +199,8 @@ function getTypeName(type) {
   return type;
 }
 
-function getStat(qId) {
-  return stats.value[qId] || {};
+function getStat(id) {
+    if (!stats.value) return {};
+    return stats.value[id] || {};
 }
 </script>
-

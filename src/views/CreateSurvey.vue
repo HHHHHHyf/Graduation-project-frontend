@@ -1,16 +1,12 @@
 <template>
-  <div class="bg-light min-vh-100 py-5">
-      <div class="container container-fluid px-5">
-          <div class="row justify-content-center">
-              <div class="col-12">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                      <h2 class="display-6 fw-bold">创建新问卷</h2>
-                      <router-link to="/dashboard" class="btn btn-outline-secondary px-4 py-2 fw-medium rounded-pill">
-                          &larr; 返回仪表盘
-                      </router-link>
-                  </div>
+  <div class="p-4 h-100">
+      <div class="row justify-content-center">
+          <div class="col-12 col-xl-10">
+              <div class="d-flex justify-content-between align-items-center mb-5">
+                  <h2 class="display-6 fw-bold">创建新问卷</h2>
+              </div>
 
-                  <form @submit.prevent="handleSubmit">
+              <form @submit.prevent="handleSubmit">
                       <!-- Survey Info -->
                       <div class="card shadow-sm border-0 rounded-lg mb-4 p-4">
                           <div class="card-body">
@@ -18,6 +14,15 @@
                               <div class="mb-4">
                                   <label class="form-label text-muted">问卷标题</label>
                                   <input type="text" class="form-control form-control-lg fw-bold" v-model="form.title" required placeholder="请输入问卷标题">
+                              </div>
+                              <div class="mb-4">
+                                  <label class="form-label text-muted">问卷类型</label>
+                                  <select class="form-select form-select-lg" v-model="form.type">
+                                      <option value="normal">普通问卷</option>
+                                      <option value="psychology">心理调查问卷</option>
+                                      <option value="disease">疾病调查问卷</option>
+                                  </select>
+                                  <div class="form-text text-muted">特殊类型问卷（如心理、疾病）在用户提交后，系统将使用 AI 进行智能分析并提供建议。</div>
                               </div>
                               <div class="mb-2">
                                   <label class="form-label text-muted">问卷描述</label>
@@ -177,7 +182,6 @@
               </div>
           </div>
       </div>
-  </div>
 </template>
 
 <script setup>
@@ -189,6 +193,7 @@ const router = useRouter()
 const form = reactive({
   title: '',
   description: '',
+  type: 'normal',
   questions: []
 })
 
