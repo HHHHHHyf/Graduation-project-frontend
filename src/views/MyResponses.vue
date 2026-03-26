@@ -29,7 +29,7 @@
                                 <i class="bi bi-clock me-1"></i> {{ response.submitted_at }}
                             </td>
                             <td class="text-end pe-4">
-                                <router-link :to="`/response/${response.survey_id}`" class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
+                                <router-link :to="`/response/${response.id}`" class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
                                     查看详情
                                 </router-link>
                             </td>

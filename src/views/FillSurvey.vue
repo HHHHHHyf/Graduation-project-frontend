@@ -16,6 +16,14 @@
                            <div v-if="notFound" class="text-center py-5">
                               <h3 class="text-muted fw-light">问卷不存在或已被删除</h3>
                           </div>
+                           <div v-else-if="hasSubmitted" class="text-center py-5">
+                              <div class="mb-4">
+                                  <i class="bi bi-check-circle text-success" style="font-size: 5rem;"></i>
+                              </div>
+                              <h3 class="fw-bold mb-3">您已经填写过此问卷</h3>
+                              <p class="text-muted mb-4">每个用户只能对该问卷进行一次作答，感谢您的参与！</p>
+                              <router-link to="/my-responses" class="btn btn-primary btn-lg rounded-pill px-5">查看我的填写记录</router-link>
+                          </div>
 
                           <form v-else @submit.prevent="handleSubmit">
                               <div v-for="(q, index) in survey.questions" :key="q.id" class="mb-5 p-4 bg-light rounded-lg shadow-sm">
@@ -123,6 +131,7 @@ const survey = ref({})
 const answersMap = reactive({})
 const loading = ref(true)
 const notFound = ref(false)
+const hasSubmitted = ref(false)
 const submitting = ref(false)
 const adviceResult = ref('')
 let adviceModalInstance = null
@@ -137,13 +146,24 @@ onMounted(async () => {
 
 async function loadSurvey() {
   try {
-      const res = await fetch('/api/public/surveys/' + surveyId);
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) {
+          headers['Authorization'] = 'Bearer ' + token;
+      }
+
+      const res = await fetch('/api/public/surveys/' + surveyId, {
+          headers: headers
+      });
       if (!res.ok) {
           notFound.value = true;
           return;
       }
       const data = await res.json();
       survey.value = data.data; // questions are in survey.questions
+      if (data.has_submitted) {
+          hasSubmitted.value = true;
+      }
 
       // Initialize multiple choice answers as arrays
       if (survey.value.questions) {

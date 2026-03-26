@@ -30,21 +30,45 @@
                                   </div>
 
                                   <div class="ps-md-5">
-                                      <div v-if="ans.is_encrypted" class="alert alert-secondary border-0 d-flex align-items-center">
+                                      <!-- 如果有问题选项，显示选项列表（用于单选/多选） -->
+                                      <div v-if="ans.options && ans.options.length > 0">
+                                          <div v-for="(opt, optIndex) in ans.options" :key="opt.id"
+                                               class="p-3 mb-2 rounded border transition-all"
+                                               :class="{'bg-primary-subtle border-primary text-primary fw-bold': ans.selected_indices && ans.selected_indices.includes(optIndex), 'bg-white border-light-subtle': !ans.selected_indices || !ans.selected_indices.includes(optIndex)}">
+                                              <div class="d-flex align-items-center">
+                                                  <div class="flex-shrink-0 me-3">
+                                                      <!-- 模拟选中状态图标 -->
+                                                      <i v-if="ans.selected_indices && ans.selected_indices.includes(optIndex)" class="bi bi-check-circle-fill fs-5"></i>
+                                                      <i v-else class="bi bi-circle text-muted fs-5"></i>
+                                                  </div>
+                                                  <div>{{ opt.text }}</div>
+                                              </div>
+                                          </div>
+                                          <!-- 隐私保护提示 -->
+                                          <div v-if="ans.is_encrypted" class="mt-3 p-3 bg-secondary-subtle rounded text-secondary d-flex align-items-center">
+                                              <span class="fs-5 me-2">🔒</span>
+                                              <small>此题为隐私保护题目，且无法解密您的选择（可能是密钥丢失或数据问题）。</small>
+                                          </div>
+                                      </div>
+
+                                      <!-- 文本或评分题，且已解密或非加密 -->
+                                      <div v-else-if="!ans.is_encrypted" class="p-3 bg-white border rounded">
+                                          <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ ans.value }}</p>
+                                      </div>
+
+                                      <!-- 纯加密数据（无选项，且无法解密） -->
+                                      <div v-else class="alert alert-secondary border-0 d-flex align-items-center">
                                           <span class="fs-4 me-3">🔒</span>
                                           <div>
                                               <strong>隐私保护数据</strong>
-                                              <p class="mb-0 small opacity-75">您的回答已通过同态加密技术提交，仅用于统计分析，无法查看明文详情。</p>
+                                              <p class="mb-0 small opacity-75">您的回答已通过同态加密技术提交，无法查看明文详情。</p>
                                           </div>
-                                      </div>
-                                      <div v-else class="p-3 bg-white border rounded">
-                                          <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ ans.value }}</p>
                                       </div>
                                   </div>
                               </div>
 
                               <div class="pt-4 text-center border-top">
-                                  <router-link to="/dashboard" class="btn btn-outline-primary btn-lg px-5 rounded-pill">返回列表</router-link>
+                                  <router-link to="/my-responses" class="btn btn-outline-primary btn-lg px-5 rounded-pill">返回列表</router-link>
                               </div>
                           </div>
                       </div>
@@ -61,9 +85,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
-const surveyId = route.params.id // 注意这里我们用 survey_id 来作为路由参数，但实际后端叫它 id
-// 在 Dashboard 中是 response/:survey_id
-// 所以这里 route.params.id 即为 survey_id
+const responseId = route.params.id
 
 const title = ref('')
 const submittedAt = ref('')
@@ -79,7 +101,7 @@ onMounted(async () => {
   }
 
   try {
-      const res = await fetch(`/api/responses/details/${surveyId}`, {
+      const res = await fetch(`/api/responses/details/${responseId}`, {
           headers: { 'Authorization': token }
       })
 
@@ -91,7 +113,8 @@ onMounted(async () => {
 
       const data = await res.json()
       title.value = data.survey_title
-      submittedAt.value = new Date(data.submitted_at).toLocaleString()
+      // 直接使用后端返回的格式化时间字符串
+      submittedAt.value = data.submitted_at
       answers.value = data.answers
 
   } catch (e) {
@@ -111,4 +134,3 @@ function getTypeName(type) {
   return type
 }
 </script>
-
