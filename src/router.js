@@ -6,9 +6,10 @@ import Dashboard from './views/Dashboard.vue'
 import CreateSurvey from './views/CreateSurvey.vue'
 import FillSurvey from './views/FillSurvey.vue'
 import Results from './views/Results.vue'
-import QuestionBank from './views/QuestionBank.vue' 
+import QuestionBank from './views/QuestionBank.vue'
 import ResponseDetail from './views/ResponseDetail.vue'
 import MyResponses from './views/MyResponses.vue' // Add import
+import AIChat from './views/AIChat.vue' // AI Chat component
 
 const routes = [
   { path: '/', component: Login },
@@ -21,6 +22,7 @@ const routes = [
     component: MyResponses,
     meta: { keepAlive: true }
   }, // Add route
+  { path: '/ai-chat', component: AIChat },
   { path: '/question-bank', component: QuestionBank },
   { path: '/survey/:id', component: FillSurvey },
   { path: '/results/:id', component: Results },

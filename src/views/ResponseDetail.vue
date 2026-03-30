@@ -24,7 +24,11 @@
                                       <span class="fs-3 fw-bold text-primary me-3 font-monospace">{{ (index + 1).toString().padStart(2, '0') }}.</span>
                                       <h4 class="fw-bold text-dark flex-grow-1 mb-0">{{ ans.question_text }}</h4>
                                       <span class="badge rounded-pill fw-normal ms-2"
-                                            :class="{'bg-primary-subtle text-primary': ans.question_type === 'single_choice', 'bg-success-subtle text-success': ans.question_type === 'score_he', 'bg-secondary-subtle text-secondary': ans.question_type === 'text'}">
+                                            :class="{
+                                                'bg-primary-subtle text-primary': ans.question_type === 'single_choice' || ans.question_type === 'multi_choice',
+                                                'bg-success-subtle text-success': ans.question_type === 'score_he' || ans.question_type === 'single_choice_he' || ans.question_type === 'multiple_choice_he',
+                                                'bg-secondary-subtle text-secondary': ans.question_type === 'text'
+                                            }">
                                           {{ getTypeName(ans.question_type) }}
                                       </span>
                                   </div>
@@ -67,8 +71,27 @@
                                   </div>
                               </div>
 
-                              <div class="pt-4 text-center border-top">
-                                  <router-link to="/my-responses" class="btn btn-outline-primary btn-lg px-5 rounded-pill">返回列表</router-link>
+                              <!-- AI 分析结果区域 -->
+                              <div v-if="aiResult" class="card shadow-sm border-0 mt-4 fade-in">
+                                <div class="card-body p-4">
+                                  <h4 class="fw-bold mb-3 d-flex align-items-center">
+                                      <i class="bi bi-stars text-primary me-2"></i>
+                                      AI 分析建议
+                                  </h4>
+                                  <div class="p-3 bg-white rounded markdown-body" style="font-size: 1.1rem; line-height: 1.6;">
+                                      <div v-html="aiResultHtml"></div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div class="mt-4 text-center">
+                                <button @click="analyzeWithAI" :disabled="aiLoading" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm hover-lift">
+                                    <span v-if="aiLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <i v-else class="bi bi-robot me-2"></i>AI 智能分析
+                                </button>
+                                <router-link to="/my-responses" class="btn btn-outline-secondary btn-lg px-5 rounded-pill shadow-sm hover-lift ms-3">
+                                    <i class="bi bi-arrow-left me-2"></i>返回列表
+                                </router-link>
                               </div>
                           </div>
                       </div>
@@ -80,20 +103,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { marked } from 'marked'
 
 const route = useRoute()
-const router = useRouter()
 const responseId = route.params.id
 
-const title = ref('')
+const surveyTitle = ref('')
 const submittedAt = ref('')
 const answers = ref([])
 const loading = ref(true)
 const error = ref('')
 
-onMounted(async () => {
+const aiLoading = ref(false)
+const aiResult = ref('')
+
+const fetchResponseDetails = async () => {
   const token = localStorage.getItem('token')
   if (!token) {
       router.push('/login')
@@ -105,17 +131,16 @@ onMounted(async () => {
           headers: { 'Authorization': token }
       })
 
-      if (!res.ok) {
+      if (res.ok) {
           const data = await res.json()
-          error.value = data.error || '加载失败'
-          return
+          surveyTitle.value = data.survey_title
+          // 直接使用后端返回的格式化时间字符串
+          submittedAt.value = data.submitted_at
+          answers.value = data.answers
+      } else {
+          const data = await res.json()
+          error.value = data.error || '获取详情失败'
       }
-
-      const data = await res.json()
-      title.value = data.survey_title
-      // 直接使用后端返回的格式化时间字符串
-      submittedAt.value = data.submitted_at
-      answers.value = data.answers
 
   } catch (e) {
       console.error(e)
@@ -123,14 +148,134 @@ onMounted(async () => {
   } finally {
       loading.value = false
   }
+}
+
+const title = computed(() => surveyTitle.value)
+
+const aiResultHtml = computed(() => {
+    return marked(aiResult.value || '')
 })
+
+onMounted(fetchResponseDetails)
 
 function getTypeName(type) {
   if (type === 'text') return '文本'
   if (type === 'single_choice') return '单选'
+  if (type === 'multi_choice') return '多选'
   if (type === 'score_he') return '隐私评分'
   if (type === 'single_choice_he') return '隐私单选'
   if (type === 'multiple_choice_he') return '隐私多选'
   return type
 }
+
+async function analyzeWithAI() {
+    aiLoading.value = true
+    aiResult.value = ''
+
+    // 构建分析的上下文文本
+    let contextText = `问卷标题：${title.value}\n\n我的回答记录如下：\n`
+
+    answers.value.forEach((ans, index) => {
+        let answerText = "未作答"
+        if (ans.options && ans.options.length > 0) {
+            if (ans.selected_indices && ans.selected_indices.length > 0) {
+                const selectedOpts = ans.selected_indices.map(i => ans.options[i]?.text).filter(Boolean)
+                if (selectedOpts.length > 0) {
+                    answerText = selectedOpts.join(', ')
+                }
+            } else {
+                 if (ans.value && !ans.is_encrypted) {
+                     answerText = ans.value // Maybe plain text value fallback
+                 }
+            }
+        } else if (ans.value) {
+            answerText = ans.value
+        }
+
+        // 截断过长文本，避免 prompt 过大导致 AI 分析超时
+        if (answerText.length > 150) {
+            answerText = answerText.substring(0, 150) + "..."
+        }
+
+        contextText += `\n${index + 1}. ${ans.question_text}\n回答：${answerText}\n`
+    })
+
+    // 这是 AI 分析问卷答案的 Prompt 模板：
+    const prompt = `你是一个问卷分析助手。
+以下是我填写的问卷记录：
+${contextText}
+请根据我的作答进行深度分析，给出整体评价与针对性建议。
+要求：
+1. 你的回答中**绝对不能**重复或复述我的任何具体答案，只能输出基于这些答案得出的分析结论和建议，以避免隐私泄露。
+2. 排版使用Markdown格式，力求结构清晰。`
+
+    try {
+        const token = localStorage.getItem('token')
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            body: JSON.stringify({
+                message: prompt,
+                model: 'deepseek-chat'
+            })
+        })
+
+        if (res.ok) {
+            const data = await res.json()
+            if (data.reply) {
+              aiResult.value = data.reply
+            } else {
+              alert(data.error || 'AI 分析失败')
+            }
+        } else {
+            const data = await res.json()
+            alert(data.error || '请求AI分析失败')
+        }
+
+    } catch (err) {
+        console.error('AI analysis error:', err)
+        alert('请求 AI 分析出错')
+    } finally {
+        aiLoading.value = false
+    }
+}
+
+const getBadgeClass = (type) => {
+  return {
+    'bg-primary-subtle text-primary': type === 'single_choice' || type === 'multi_choice',
+    'bg-success-subtle text-success': type === 'score_he' || type === 'single_choice_he' || type === 'multiple_choice_he',
+    'bg-secondary-subtle text-secondary': type === 'text'
+  }
+}
 </script>
+
+<style scoped>
+/* Add some basic markdown styling */
+.markdown-body :deep(h1), .markdown-body :deep(h2), .markdown-body :deep(h3) {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+.markdown-body :deep(h3) {
+    font-size: 1.25em;
+}
+.markdown-body :deep(p) {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+.markdown-body :deep(ul), .markdown-body :deep(ol) {
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-left: 2em;
+}
+.markdown-body :deep(li) {
+    margin-top: 0.25em;
+}
+.markdown-body :deep(strong) {
+    font-weight: 600;
+}
+</style>

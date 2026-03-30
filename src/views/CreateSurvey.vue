@@ -149,15 +149,19 @@
 
                                   <div v-if="currentBank" class="mb-3">
                                       <h6 class="fw-bold">题目列表</h6>
-                                      <div v-for="(q, idx) in currentBank.questions" :key="idx" class="border rounded p-3 mb-2 cursor-pointer" @click="addQuestionFromBank(q)">
+                                      <div v-for="(q, idx) in currentBank.questions" :key="idx"
+                                           class="border rounded p-3 mb-2 cursor-pointer transition-all"
+                                           :class="{'border-primary bg-primary-subtle': selectedBankQuestions.includes(q)}"
+                                           @click="toggleBankQuestionSelection(q)">
                                           <div class="d-flex justify-content-between align-items-center">
-                                              <div>
+                                              <div class="d-flex align-items-center">
+                                                  <input class="form-check-input me-3 mt-0" type="checkbox" :checked="selectedBankQuestions.includes(q)" @click.stop="toggleBankQuestionSelection(q)">
                                                   <span class="badge rounded-pill text-bg-primary me-2">{{ getTypeName(q.type) }}</span>
                                                   <strong>{{ q.text }}</strong>
                                               </div>
                                               <span class="text-muted small">{{ q.options ? q.options.length : 0 }} 个选项</span>
                                           </div>
-                                          <div class="mt-2 small text-muted" v-if="q.options && q.options.length > 0">
+                                          <div class="mt-2 small text-muted ms-4 ps-2" v-if="q.options && q.options.length > 0">
                                               <template v-for="(option, oidx) in q.options" v-if="oidx < 2">
                                                   <span class="badge rounded-pill text-bg-light text-muted me-1">{{ option.text }}</span>
                                               </template>
@@ -171,8 +175,11 @@
                                   </div>
                               </div>
                               <div class="modal-footer">
+                                  <div class="me-auto text-muted small" v-if="selectedBankQuestions.length > 0">
+                                      已选择 {{ selectedBankQuestions.length }} 道题目
+                                  </div>
                                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                                  <button type="button" class="btn btn-primary" @click="">
+                                  <button type="button" class="btn btn-primary" @click="confirmAddBankQuestions" :disabled="selectedBankQuestions.length === 0">
                                       确定选择
                                   </button>
                               </div>
@@ -202,6 +209,7 @@ const bankModalRef = ref(null)
 let bankModal = null
 const banks = ref([])
 const currentBank = ref(null)
+const selectedBankQuestions = ref([])
 
 onMounted(() => {
     if (bankModalRef.value) {
@@ -210,6 +218,7 @@ onMounted(() => {
 })
 
 async function openBankModal() {
+    selectedBankQuestions.value = [] // clear selections when reopening
     bankModal.show()
     if (banks.value.length === 0) {
         await fetchBanks()
@@ -236,10 +245,28 @@ async function selectBank(bank) {
         })
         if (res.ok) {
             currentBank.value = await res.json()
+            selectedBankQuestions.value = [] // clear selections when switching banks
         }
     } catch (e) {
         console.error(e)
     }
+}
+
+function toggleBankQuestionSelection(q) {
+    const index = selectedBankQuestions.value.indexOf(q)
+    if (index > -1) {
+        selectedBankQuestions.value.splice(index, 1)
+    } else {
+        selectedBankQuestions.value.push(q)
+    }
+}
+
+function confirmAddBankQuestions() {
+    for (const q of selectedBankQuestions.value) {
+        addQuestionFromBank(q)
+    }
+    bankModal.hide()
+    selectedBankQuestions.value = []
 }
 
 function addQuestionFromBank(q) {

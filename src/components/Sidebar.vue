@@ -54,6 +54,12 @@ const username = localStorage.getItem('username') || '用户';
            我的填写
         </router-link>
       </li>
+      <li class="nav-item mb-1">
+        <router-link to="/ai-chat" class="nav-link" :class="{ 'active': isActive('/ai-chat') }">
+           <i class="bi bi-robot me-2"></i>
+           AI 助理
+        </router-link>
+      </li>
     </ul>
     <hr>
     <div class="dropdown">
