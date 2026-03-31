@@ -2,20 +2,22 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import Login from './views/Login.vue'
 import Register from './views/Register.vue'
+import ForgotPassword from './views/ForgotPassword.vue'
 import Dashboard from './views/Dashboard.vue'
 import CreateSurvey from './views/CreateSurvey.vue'
 import FillSurvey from './views/FillSurvey.vue'
 import Results from './views/Results.vue'
 import QuestionBank from './views/QuestionBank.vue'
+import AIChat from './views/AIChat.vue'
 import ResponseDetail from './views/ResponseDetail.vue'
 import MyResponses from './views/MyResponses.vue' // Add import
-import AIChat from './views/AIChat.vue' // AI Chat component
 
 const routes = [
   { path: '/', component: Login },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
-  { path: '/dashboard', component: Dashboard },
+  { path: '/forgot-password', component: ForgotPassword },
+  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
   { path: '/create', component: CreateSurvey },
   { 
     path: '/my-responses', 

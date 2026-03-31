@@ -146,9 +146,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, watch } from 'vue';
 import axios from 'axios';
+import { useRoute } from 'vue-router';
 import { Modal } from 'bootstrap';
+
+const route = useRoute();
 
 const banks = ref([]);
 const currentBank = ref(null);
@@ -179,6 +182,9 @@ const typeMap = {
 const getTypeName = (type) => typeMap[type] || type;
 
 const fetchBanks = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
   try {
     const res = await axios.get('/api/question-banks/my');
     banks.value = res.data;
@@ -188,9 +194,21 @@ const fetchBanks = async () => {
         else currentBank.value = null;
     }
   } catch (error) {
+    if (error.response && error.response.status === 401) {
+        // Handle unauthorized or token change if needed
+    }
     console.error('Failed to fetch banks', error);
   }
 };
+
+// Re-fetch data when route or token could have changed
+watch(
+  () => route.fullPath,
+  () => {
+    currentBank.value = null;
+    fetchBanks();
+  }
+);
 
 const selectBank = async (bank) => {
   try {
@@ -318,4 +336,3 @@ onMounted(() => {
     border-color: #0d6efd;
 }
 </style>
-

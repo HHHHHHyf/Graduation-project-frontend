@@ -105,12 +105,12 @@
           </div>
 
           <!-- Right Side: Register Form -->
-          <div class="col-lg-5 bg-white d-flex flex-column justify-content-center align-items-center position-relative">
-              <div class="w-100 px-5 py-5" style="max-width: 480px;">
+          <div class="col-lg-5 bg-white d-flex flex-column justify-content-center align-items-center position-relative scrollable-y">
+              <div class="w-100 px-5 py-4" style="max-width: 480px;">
 
                   <!-- Header -->
-                  <div class="mb-4">
-                      <div class="d-flex justify-content-between align-items-baseline mb-2">
+                  <div class="mb-3">
+                      <div class="d-flex justify-content-between align-items-baseline mb-1">
                         <h2 class="fw-bold fs-2 text-dark m-0">注册新账号</h2>
                       </div>
                       <p class="text-muted small mb-0">系统将自动为您生成同态加密密钥对</p>
@@ -118,7 +118,7 @@
 
                   <!-- Form -->
                   <form @submit.prevent="handleRegister">
-                      <div class="mb-4">
+                      <div class="mb-3">
                           <label class="form-label fw-bold text-dark small">* 设定用户名</label>
                           <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
                               <span class="input-group-text bg-transparent border-0 ps-3">
@@ -130,7 +130,27 @@
                           </div>
                       </div>
 
-                      <div class="mb-4">
+                      <div class="mb-3">
+                          <label class="form-label fw-bold text-dark small">* 邮箱地址</label>
+                          <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
+                              <span class="input-group-text bg-transparent border-0 ps-3">
+                                📧
+                              </span>
+                              <input type="email" class="form-control bg-transparent border-0 shadow-none ps-2 fs-6" v-model="form.email" placeholder="example@email.com" required>
+                          </div>
+                      </div>
+
+                      <div class="mb-3">
+                          <label class="form-label fw-bold text-dark small">* 验证码</label>
+                          <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
+                              <input type="text" class="form-control bg-transparent border-0 shadow-none ps-3 fs-6" v-model="form.code" placeholder="6位数字" required>
+                              <button type="button" class="btn btn-outline-primary btn-xs border-0 px-2" :disabled="countdown > 0" @click="sendCode" style="font-size: 0.75rem; white-space: nowrap;">
+                                  {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+                              </button>
+                          </div>
+                      </div>
+
+                      <div class="mb-3">
                           <label class="form-label fw-bold text-dark small">* 设定密码</label>
                           <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
                               <span class="input-group-text bg-transparent border-0 ps-3">
@@ -142,7 +162,7 @@
                           </div>
                       </div>
 
-                      <div class="mb-4">
+                      <div class="mb-3">
                           <label class="form-label fw-bold text-dark small">* 确认密码</label>
                           <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
                               <span class="input-group-text bg-transparent border-0 ps-3">
@@ -155,14 +175,14 @@
                           </div>
                       </div>
 
-                      <div class="d-grid mb-4">
-                          <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow-lg-primary border-0" :disabled="loading" style="background-color: #5355E6;">
+                      <div class="d-grid mb-3">
+                          <button type="submit" class="btn btn-primary btn-lg py-2 fw-bold shadow-lg-primary border-0" :disabled="loading" style="background-color: #5355E6;">
                               <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                               <span v-else>立即注册</span>
                           </button>
                       </div>
 
-                      <div class="text-center mb-2">
+                      <div class="text-center mb-0">
                         <span class="text-muted small">已有账号?</span>
                         <router-link to="/login" class="text-primary text-decoration-none fw-bold small ms-1">
                             直接登录 <span class="fs-6">&rsaquo;</span>
@@ -188,12 +208,43 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const countdown = ref(0)
 const form = reactive({
   username: '',
+  email: '',
+  code: '',
   password: '',
   confirmPassword: ''
 })
 const loading = ref(false)
+
+async function sendCode() {
+  if (!form.email || !form.email.includes('@')) {
+    alert('请输入有效的邮箱地址')
+    return
+  }
+
+  try {
+    const res = await fetch('http://localhost:8080/api/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: form.email })
+    })
+    const result = await res.json()
+    if (res.ok) {
+      alert(result.message)
+      countdown.value = 60
+      const timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value <= 0) clearInterval(timer)
+      }, 1000)
+    } else {
+      alert(result.error)
+    }
+  } catch (err) {
+    alert('发送失败，请重试')
+  }
+}
 
 async function handleRegister() {
   if (form.password !== form.confirmPassword) {
@@ -202,7 +253,7 @@ async function handleRegister() {
   }
   loading.value = true
   try {
-      const res = await fetch('/auth/register', {
+      const res = await fetch('http://localhost:8080/api/register', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(form)

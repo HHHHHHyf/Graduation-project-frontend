@@ -113,21 +113,18 @@
                       </div>
 
                       <!-- Submit Button -->
-                      <div class="fixed-bottom bg-white shadow-lg py-3 border-top" style="z-index: 1000;">
-                          <div class="container container-lg">
-                              <div class="row justify-content-center">
-                                  <div class="col-lg-8 text-center">
-                                      <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm hover-lift">
-                                          发布问卷
-                                      </button>
-                                  </div>
-                              </div>
+                      <div :class="['fixed-bottom py-3', { 'with-sidebar-bottom': true }]" style="z-index: 1000;">
+                        <div class="row justify-content-center m-0">
+                          <div class="col-lg-6 text-center">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-lg">
+                              发布问卷
+                            </button>
                           </div>
+                        </div>
                       </div>
 
-                      <!-- Spacer -->
-                      <div style="height: 120px;"></div>
-                  </form>
+                      <div style="height: 100px;"></div>
+                    </form>
 
                   <!-- Question Bank Modal -->
                   <div class="modal fade" tabindex="-1" ref="bankModalRef">
@@ -396,3 +393,22 @@ async function handleSubmit() {
 }
 </script>
 
+<style scoped>
+/* Ensure the fixed bottom bar respects the sidebar width */
+.fixed-bottom.with-sidebar-bottom {
+  left: 280px; /* Width of sidebar */
+  width: calc(100% - 280px);
+}
+
+/* Responsive adjustment for mobile (if sidebar is hidden) */
+@media (max-width: 991.98px) {
+  .fixed-bottom.with-sidebar-bottom {
+    left: 0;
+    width: 100%;
+  }
+}
+
+.question-card {
+  /* Your existing styles */
+}
+</style>

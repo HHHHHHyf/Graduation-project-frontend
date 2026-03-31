@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="login-wrapper container-fluid p-0 min-vh-100 overflow-hidden">
       <div class="row g-0 h-100 min-vh-100">
           <!-- Left Side: Fancy Background -->
@@ -119,14 +119,14 @@
                   <!-- Form -->
                   <form @submit.prevent="handleLogin">
                       <div class="mb-4">
-                          <label class="form-label fw-bold text-dark small">* 请输入用户名</label>
+                          <label class="form-label fw-bold text-dark small">* 请输入用户名或邮箱</label>
                           <div class="input-group input-group-lg border rounded-3 overflow-hidden bg-light-input">
                               <span class="input-group-text bg-transparent border-0 ps-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#adb5bd" class="bi bi-person" viewBox="0 0 16 16">
                                   <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                                 </svg>
                               </span>
-                              <input type="text" class="form-control bg-transparent border-0 shadow-none ps-2 fs-6" v-model="form.username" required>
+                              <input type="text" class="form-control bg-transparent border-0 shadow-none ps-2 fs-6" v-model="form.identifier" required>
                           </div>
                       </div>
 
@@ -149,7 +149,7 @@
                                   记住密码
                               </label>
                           </div>
-                          <a href="javascript:void(0)" class="text-decoration-none small text-muted hover-primary">忘记密码?</a>
+                          <router-link to="/forgot-password" class="text-decoration-none small text-muted hover-primary">忘记密码?</router-link>
                       </div>
 
                       <div class="d-grid mb-4">
@@ -193,7 +193,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const form = reactive({
-  username: '',
+  identifier: '',
   password: ''
 })
 const loading = ref(false)
@@ -201,24 +201,25 @@ const loading = ref(false)
 async function handleLogin() {
   loading.value = true
   try {
-      const res = await fetch('/auth/login', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(form)
-      });
+    const res = await fetch('http://localhost:8080/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    })
 
-      const result = await res.json();
-      if (res.ok) {
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('username', result.username);
-          router.push('/dashboard');
-      } else {
-          alert(result.error);
-      }
-  } catch (error) {
-      alert('登录请求失败');
+    const result = await res.json()
+    if (res.ok) {
+      localStorage.setItem('token', result.token)
+      localStorage.setItem('user', JSON.stringify(result.user))
+      // 登录成功后强制刷新页面以清除所有旧账号的 Vue 状态
+      window.location.href = '/dashboard'
+    } else {
+      alert(result.error)
+    }
+  } catch (err) {
+    alert('登录失败，请检查网络')
   } finally {
-      loading.value = false;
+    loading.value = false
   }
 }
 </script>

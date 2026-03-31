@@ -19,79 +19,90 @@
                           </div>
 
                           <div v-else>
-                              <div v-for="(ans, index) in answers" :key="ans.question_id" class="mb-5 p-4 bg-light rounded-lg shadow-sm">
-                                  <div class="d-flex align-items-baseline mb-4">
-                                      <span class="fs-3 fw-bold text-primary me-3 font-monospace">{{ (index + 1).toString().padStart(2, '0') }}.</span>
-                                      <h4 class="fw-bold text-dark flex-grow-1 mb-0">{{ ans.question_text }}</h4>
-                                      <span class="badge rounded-pill fw-normal ms-2"
-                                            :class="{
-                                                'bg-primary-subtle text-primary': ans.question_type === 'single_choice' || ans.question_type === 'multi_choice',
-                                                'bg-success-subtle text-success': ans.question_type === 'score_he' || ans.question_type === 'single_choice_he' || ans.question_type === 'multiple_choice_he',
-                                                'bg-secondary-subtle text-secondary': ans.question_type === 'text'
-                                            }">
-                                          {{ getTypeName(ans.question_type) }}
-                                      </span>
-                                  </div>
+                              <!-- 问卷答案详情 (在显示 AI 分析时隐藏) -->
+                              <div v-show="!aiResult">
+                                  <div v-for="(ans, index) in answers" :key="ans.question_id" class="mb-5 p-4 bg-light rounded-lg shadow-sm">
+                                      <div class="d-flex align-items-baseline mb-4">
+                                          <span class="fs-3 fw-bold text-primary me-3 font-monospace">{{ (index + 1).toString().padStart(2, '0') }}.</span>
+                                          <h4 class="fw-bold text-dark flex-grow-1 mb-0">{{ ans.question_text }}</h4>
+                                          <span class="badge rounded-pill fw-normal ms-2"
+                                                :class="{
+                                                    'bg-primary-subtle text-primary': ans.question_type === 'single_choice' || ans.question_type === 'multi_choice',
+                                                    'bg-success-subtle text-success': ans.question_type === 'score_he' || ans.question_type === 'single_choice_he' || ans.question_type === 'multiple_choice_he',
+                                                    'bg-secondary-subtle text-secondary': ans.question_type === 'text'
+                                                }">
+                                              {{ getTypeName(ans.question_type) }}
+                                          </span>
+                                      </div>
 
-                                  <div class="ps-md-5">
-                                      <!-- 如果有问题选项，显示选项列表（用于单选/多选） -->
-                                      <div v-if="ans.options && ans.options.length > 0">
-                                          <div v-for="(opt, optIndex) in ans.options" :key="opt.id"
-                                               class="p-3 mb-2 rounded border transition-all"
-                                               :class="{'bg-primary-subtle border-primary text-primary fw-bold': ans.selected_indices && ans.selected_indices.includes(optIndex), 'bg-white border-light-subtle': !ans.selected_indices || !ans.selected_indices.includes(optIndex)}">
-                                              <div class="d-flex align-items-center">
-                                                  <div class="flex-shrink-0 me-3">
-                                                      <!-- 模拟选中状态图标 -->
-                                                      <i v-if="ans.selected_indices && ans.selected_indices.includes(optIndex)" class="bi bi-check-circle-fill fs-5"></i>
-                                                      <i v-else class="bi bi-circle text-muted fs-5"></i>
+                                      <div class="ps-md-5">
+                                          <!-- 如果有问题选项，显示选项列表（用于单选/多选） -->
+                                          <div v-if="ans.options && ans.options.length > 0">
+                                              <div v-for="(opt, optIndex) in ans.options" :key="opt.id"
+                                                   class="p-3 mb-2 rounded border transition-all"
+                                                   :class="{'bg-primary-subtle border-primary text-primary fw-bold': ans.selected_indices && ans.selected_indices.includes(optIndex), 'bg-white border-light-subtle': !ans.selected_indices || !ans.selected_indices.includes(optIndex)}">
+                                                  <div class="d-flex align-items-center">
+                                                      <div class="flex-shrink-0 me-3">
+                                                          <!-- 模拟选中状态图标 -->
+                                                          <i v-if="ans.selected_indices && ans.selected_indices.includes(optIndex)" class="bi bi-check-circle-fill fs-5"></i>
+                                                          <i v-else class="bi bi-circle text-muted fs-5"></i>
+                                                      </div>
+                                                      <div>{{ opt.text }}</div>
                                                   </div>
-                                                  <div>{{ opt.text }}</div>
+                                              </div>
+                                              <!-- 隐私保护提示 -->
+                                              <div v-if="ans.is_encrypted" class="mt-3 p-3 bg-secondary-subtle rounded text-secondary d-flex align-items-center">
+                                                  <span class="fs-5 me-2">🔒</span>
+                                                  <small>此题为隐私保护题目，且无法解密您的选择（可能是密钥丢失或数据问题）。</small>
                                               </div>
                                           </div>
-                                          <!-- 隐私保护提示 -->
-                                          <div v-if="ans.is_encrypted" class="mt-3 p-3 bg-secondary-subtle rounded text-secondary d-flex align-items-center">
-                                              <span class="fs-5 me-2">🔒</span>
-                                              <small>此题为隐私保护题目，且无法解密您的选择（可能是密钥丢失或数据问题）。</small>
+
+                                          <!-- 文本或评分题，且已解密或非加密 -->
+                                          <div v-else-if="!ans.is_encrypted" class="p-3 bg-white border rounded">
+                                              <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ ans.value }}</p>
+                                          </div>
+
+                                          <!-- 纯加密数据（无选项，且无法解密） -->
+                                          <div v-else class="alert alert-secondary border-0 d-flex align-items-center">
+                                              <span class="fs-4 me-3">🔒</span>
+                                              <div>
+                                                  <strong>隐私保护数据</strong>
+                                                  <p class="mb-0 small opacity-75">您的回答已通过同态加密技术提交，无法查看明文详情。</p>
+                                              </div>
                                           </div>
                                       </div>
+                                  </div>
 
-                                      <!-- 文本或评分题，且已解密或非加密 -->
-                                      <div v-else-if="!ans.is_encrypted" class="p-3 bg-white border rounded">
-                                          <p class="mb-0 fs-5" style="white-space: pre-wrap;">{{ ans.value }}</p>
-                                      </div>
-
-                                      <!-- 纯加密数据（无选项，且无法解密） -->
-                                      <div v-else class="alert alert-secondary border-0 d-flex align-items-center">
-                                          <span class="fs-4 me-3">🔒</span>
-                                          <div>
-                                              <strong>隐私保护数据</strong>
-                                              <p class="mb-0 small opacity-75">您的回答已通过同态加密技术提交，无法查看明文详情。</p>
-                                          </div>
-                                      </div>
+                                  <div class="mt-4 text-center">
+                                    <button @click="analyzeWithAI" :disabled="aiLoading" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm hover-lift">
+                                        <span v-if="aiLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <i v-else class="bi bi-robot me-2"></i>AI 智能分析
+                                    </button>
+                                    <router-link to="/my-responses" class="btn btn-outline-secondary btn-lg px-5 rounded-pill shadow-sm hover-lift ms-3">
+                                        <i class="bi bi-arrow-left me-2"></i>返回列表
+                                    </router-link>
                                   </div>
                               </div>
 
-                              <!-- AI 分析结果区域 -->
-                              <div v-if="aiResult" class="card shadow-sm border-0 mt-4 fade-in">
-                                <div class="card-body p-4">
-                                  <h4 class="fw-bold mb-3 d-flex align-items-center">
-                                      <i class="bi bi-stars text-primary me-2"></i>
-                                      AI 分析建议
-                                  </h4>
-                                  <div class="p-3 bg-white rounded markdown-body" style="font-size: 1.1rem; line-height: 1.6;">
-                                      <div v-html="aiResultHtml"></div>
-                                  </div>
+                              <!-- AI 分析结果界面 (覆盖显示) -->
+                              <div v-if="aiResult" class="fade-in">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="fw-bold mb-0 d-flex align-items-center">
+                                        <i class="bi bi-stars text-primary me-2"></i>
+                                        AI 分析建议
+                                    </h4>
+                                    <button @click="closeAIResult" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                        <i class="bi bi-x-lg me-1"></i>退出分析
+                                    </button>
                                 </div>
-                              </div>
-
-                              <div class="mt-4 text-center">
-                                <button @click="analyzeWithAI" :disabled="aiLoading" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm hover-lift">
-                                    <span v-if="aiLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    <i v-else class="bi bi-robot me-2"></i>AI 智能分析
-                                </button>
-                                <router-link to="/my-responses" class="btn btn-outline-secondary btn-lg px-5 rounded-pill shadow-sm hover-lift ms-3">
-                                    <i class="bi bi-arrow-left me-2"></i>返回列表
-                                </router-link>
+                                <div class="p-4 bg-light rounded-lg markdown-body shadow-sm" style="font-size: 1.1rem; line-height: 1.6; min-height: 400px;">
+                                    <div v-html="aiResultHtml"></div>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <button @click="closeAIResult" class="btn btn-secondary px-5 rounded-pill shadow-sm">
+                                        返回答案详情
+                                    </button>
+                                </div>
                               </div>
                           </div>
                       </div>
@@ -118,6 +129,10 @@ const error = ref('')
 
 const aiLoading = ref(false)
 const aiResult = ref('')
+
+const closeAIResult = () => {
+    aiResult.value = ''
+}
 
 const fetchResponseDetails = async () => {
   const token = localStorage.getItem('token')

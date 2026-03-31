@@ -1,5 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
+import { ref, watchEffect } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -11,10 +12,25 @@ const isActive = (path) => {
 const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    localStorage.removeItem('user');
     router.push('/login');
 };
 
-const username = localStorage.getItem('username') || '用户';
+const username = ref('用户');
+
+watchEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+        try {
+            const user = JSON.parse(userStr);
+            username.value = user.username || '用户';
+        } catch (e) {
+            username.value = '用户';
+        }
+    } else {
+        username.value = localStorage.getItem('username') || '用户';
+    }
+});
 </script>
 
 <template>

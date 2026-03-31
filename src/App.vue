@@ -6,7 +6,7 @@ import Sidebar from './components/Sidebar.vue';
 const route = useRoute();
 
 const showSidebar = computed(() => {
-  const publicRoutes = ['/login', '/register', '/'];
+  const publicRoutes = ['/login', '/register', '/', '/forgot-password'];
   if (publicRoutes.includes(route.path)) return false;
   // If route starts with /survey/ (filling survey), hide sidebar
   if (route.path.startsWith('/survey/')) return false;
